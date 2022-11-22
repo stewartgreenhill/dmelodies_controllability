@@ -183,6 +183,12 @@ for m in model_type_list:
 
                         print(json.dumps(results_dict, indent=2))
                         print(f"LDR Metric: {agg_metric:.3f}, {weight_agg_metric:.3f}")
+                        results_dict['ldr_agg_metric'] = agg_metric
+                        results_dict['ldr_weight_agg_metric'] = weight_agg_metric
+                        saveName = os.path.join(vae_trainer.get_save_dir(vae_trainer.model), "ldr.json")
+                        with open(saveName, "w") as jf:
+                            print("Writing {saveName}...")
+                            json.dump(results_dict, jf, indent=2)
 
                         # # GENERATING LATENT SURFACE PLOTS
                         _, _, gen_test = vae_trainer.dataset.data_loaders(batch_size=256)
