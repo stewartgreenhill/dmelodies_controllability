@@ -38,7 +38,7 @@ class Trainer(ABC):
         self.trainer_config = ''
         self.writer = None
 
-    def train_model(self, batch_size, num_epochs, log=False):
+    def train_model(self, batch_size, num_epochs, split, log=False):
         """
         Trains the src
         :param batch_size: int,
@@ -62,7 +62,7 @@ class Trainer(ABC):
          generator_val,
          _) = self.dataset.data_loaders(
             batch_size=batch_size,
-            split=(0.70, 0.20)
+            split=split
         )
         print('Num Train Batches: ', len(generator_train))
         print('Num Valid Batches: ', len(generator_val))

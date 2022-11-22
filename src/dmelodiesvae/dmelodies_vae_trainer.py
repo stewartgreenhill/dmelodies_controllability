@@ -246,7 +246,7 @@ class DMelodiesVAETrainer(Trainer):
             metrics = self.compute_eval_metrics()
         return metrics
 
-    def compute_eval_metrics(self):
+    def compute_eval_metrics(self, split):
         """Returns the saved results as dict or computes them"""
         results_fp = os.path.join(
             os.path.dirname(self.model.filepath),
@@ -257,20 +257,20 @@ class DMelodiesVAETrainer(Trainer):
                 self.metrics = json.load(infile)
                 return self.metrics
         batch_size = 512
-        _, _, gen_test = self.dataset.data_loaders(batch_size=batch_size, split=(0.70, 0.20))
+        _, _, gen_test = self.dataset.data_loaders(batch_size=batch_size, split=split)
         latent_codes, attributes, attr_list = self.compute_representations(gen_test)
         self.metrics.update(compute_mig(latent_codes, attributes))
         mig_factors = self.metrics["mig_factors"]
         self.metrics["mig_factors"] = {attr: mig for attr, mig in zip(attr_list, mig_factors)}
         self.metrics.update(compute_modularity(latent_codes, attributes))
         self.metrics.update(compute_sap_score(latent_codes, attributes))
-        self.metrics.update(self.test_model(batch_size=batch_size))
+        self.metrics.update(self.test_model(batch_size=batch_size, split=split))
         with open(results_fp, 'w') as outfile:
             json.dump(self.metrics, outfile, indent=2)
         return self.metrics
 
-    def test_model(self, batch_size):
-        _, _, gen_test = self.dataset.data_loaders(batch_size)
+    def test_model(self, batch_size, split):
+        _, _, gen_test = self.dataset.data_loaders(batch_size, split=split)
         mean_loss_test, mean_accuracy_test = self.loss_and_acc_test(gen_test)
         print('Test Epoch:')
         print(
@@ -377,7 +377,7 @@ class DMelodiesVAETrainer(Trainer):
         return a, b
         # plot_dim(a, b, save_filename, dim1=dim1, dim2=dim2)
 
-    def plot_latent_interpolations(self):
+    def plot_latent_interpolations(self, split):
         results_fp = os.path.join(
             os.path.dirname(self.model.filepath),
             'results_dict.json'
@@ -387,7 +387,7 @@ class DMelodiesVAETrainer(Trainer):
         reg_lim_dict = None
         if "reg_dim_limits" in metrics.keys():
             reg_lim_dict = metrics["reg_dim_limits"]
-        _, _, gen_test = self.dataset.data_loaders(batch_size=256)
+        _, _, gen_test = self.dataset.data_loaders(batch_size=256, split=split)
         latent_codes, attributes, attr_list, input_data = self.compute_representations(
             gen_test, num_batches=1, return_input=True
         )
@@ -476,7 +476,7 @@ class DMelodiesVAETrainer(Trainer):
             attr_labels[i, :] = np.array(self.dataset.compute_attributes(tensor_score[i, :]))
         return attr_labels.astype('int')
 
-    def update_non_reg_dim_limits(self, overwrite=False):
+    def update_non_reg_dim_limits(self, split, overwrite=False):
         results_fp = os.path.join(
             os.path.dirname(self.model.filepath),
             'results_dict.json'
@@ -486,7 +486,7 @@ class DMelodiesVAETrainer(Trainer):
         if "non_reg_dim_limits" in metrics.keys() and not overwrite:
             non_reg_lim_dict = np.array(metrics["non_reg_dim_limits"])
         else:
-            _, gen_val, _ = self.dataset.data_loaders(batch_size=512)
+            _, gen_val, _ = self.dataset.data_loaders(batch_size=512, split=split)
             latent_codes, attributes, attr_list = self.compute_representations(gen_val)
             non_reg_lim_dict = {}
             attr_dims = [d for d in self.attr_dict.values()]
@@ -499,7 +499,7 @@ class DMelodiesVAETrainer(Trainer):
                 json.dump(metrics, outfile, indent=2)
         return non_reg_lim_dict
 
-    def update_reg_dim_limits(self, overwrite=False):
+    def update_reg_dim_limits(self, split, overwrite=False):
         results_fp = os.path.join(
             os.path.dirname(self.model.filepath),
             'results_dict.json'
@@ -509,7 +509,7 @@ class DMelodiesVAETrainer(Trainer):
         if "reg_dim_limits" in metrics.keys() and not overwrite:
             reg_lim_dict = np.array(metrics["reg_dim_limits"])
         else:
-            _, gen_val, _ = self.dataset.data_loaders(batch_size=512)
+            _, gen_val, _ = self.dataset.data_loaders(batch_size=512, split=split)
             latent_codes, attributes, attr_list = self.compute_representations(gen_val)
             reg_lim_dict = {}
             for i, attr in enumerate(attr_list):
@@ -519,7 +519,7 @@ class DMelodiesVAETrainer(Trainer):
                 json.dump(metrics, outfile, indent=2)
         return reg_lim_dict
 
-    def evaluate_latent_interpolations(self, overwrite=False, plot=False):
+    def evaluate_latent_interpolations(self, split, overwrite=False, plot=False):
         results_fp = os.path.join(
             os.path.dirname(self.model.filepath),
             'results_dict.json'
@@ -530,7 +530,7 @@ class DMelodiesVAETrainer(Trainer):
             attr_change_mat = np.array(metrics["eval_interpolations"])
         else:
             reg_lim_dict = metrics["reg_dim_limits"]
-            _, _, gen_test = self.dataset.data_loaders(batch_size=256)
+            _, _, gen_test = self.dataset.data_loaders(batch_size=256, split=split)
             latent_codes, attributes, attr_list, input_data = self.compute_representations(
                 gen_test, num_batches=4-1, return_input=True
             )
