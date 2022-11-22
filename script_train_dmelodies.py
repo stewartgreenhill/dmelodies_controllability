@@ -26,6 +26,7 @@ parser.add_argument("--gamma", type=float, default=None)
 parser.add_argument("--delta", type=float, default=10.0)
 parser.add_argument("--interp_num_dims", type=int, default=1)
 parser.add_argument("--no_log", action='store_false')
+parser.add_argument("--split", nargs=3, type=float, default=(0.7, 0.2, 0.1))
 
 args = parser.parse_args()
 
@@ -113,13 +114,13 @@ for seed in seed_list:
                     **trainer_args
                 )
                 if not os.path.exists(vae_model.filepath):
-                    vae_trainer.train_model(batch_size=batch_size, num_epochs=num_epochs, log=args.no_log)
+                    vae_trainer.train_model(batch_size=batch_size, num_epochs=num_epochs, log=args.no_log, split=args.split)
                 else:
                     print('Model exists. Running evaluation.')
                 vae_trainer.load_model()
-                metrics = vae_trainer.compute_eval_metrics()
+                metrics = vae_trainer.compute_eval_metrics(split=args.split)
                 print(f"Model: {net_type}_{trainer_args}")
                 print(json.dumps(metrics, indent=2))
-                print(vae_trainer.test_model(batch_size=512))
-                vae_trainer.update_reg_dim_limits()
-                vae_trainer.evaluate_latent_interpolations()
+                print(vae_trainer.test_model(batch_size=512, split=args.split))
+                vae_trainer.update_reg_dim_limits(args.split)
+                vae_trainer.evaluate_latent_interpolations(args.split)
