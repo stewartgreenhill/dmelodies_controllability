@@ -35,33 +35,33 @@ parser.add_argument("--no_log", action='store_false')
 args = parser.parse_args()
 
 # Select the Type of VAE-model and the network architecture
-model_type_list = ['interp-VAE', 's2-VAE', 'ar-VAE']  # , 'ar-VAE', 'interp-VAE', 's2-VAE']
+model_type_list = ['beta-VAE', 'interp-VAE', 's2-VAE', 'ar-VAE']  # , 'ar-VAE', 'interp-VAE', 's2-VAE']
 net_type_list = ['rnn']
 
 # Specify training params
-seed_list = [0]  # , 1, 2]
+seed_list = [0, 1, 2]
 model_dict = {
     'beta-VAE': {
         'capacity_list': [50.0],
-        'beta_list': [0.2],
+        'beta_list': [0.2, 1.0, 4.0],
         'gamma_list': [1.0]
     },
     'ar-VAE': {
         'capacity_list': [50.0],
         'beta_list': [0.2],
-        'gamma_list': [1.0],
+        'gamma_list': [0.1, 1.0, 10.0],
         'delta': args.delta,
     },
     'interp-VAE': {
         'capacity_list': [50.0],
         'beta_list': [0.2],
-        'gamma_list': [1.0],
+        'gamma_list': [0.1, 1.0, 10.0],
         'num_dims': args.interp_num_dims
     },
     's2-VAE': {
         'capacity_list': [50.0],
         'beta_list': [0.2],
-        'gamma_list': [1.0],
+        'gamma_list': [0.1, 1.0, 10.0],
     }
 
 }
@@ -89,7 +89,7 @@ for m in model_type_list:
         g_list = model_dict[m]['gamma_list']
 
         for c in c_list:
-            for b in b_list:
+            for beta in b_list:
                 for g in g_list:
                     attr_change_mat = np.zeros((9, 9))
                     for seed in seed_list:
@@ -104,7 +104,7 @@ for m in model_type_list:
                             vae_model.cuda()
                         trainer_args = {
                             'model_type': m,
-                            'beta': b,
+                            'beta': beta,
                             'capacity': c,
                             'lr': 1e-4,
                             'rand': seed
