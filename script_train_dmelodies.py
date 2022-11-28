@@ -21,7 +21,7 @@ parser.add_argument(
     default='beta-VAE',
     choices=['beta-VAE', 'ar-VAE', 'interp-VAE', 's2-VAE']
 )
-parser.add_argument("--net_type", type=str, default='cnn', choices=['rnn', 'cnn'])
+parser.add_argument("--net_type", type=str, default='rnn', choices=['rnn', 'cnn'])
 parser.add_argument("--gamma", type=float, default=None)
 parser.add_argument("--delta", type=float, default=10.0)
 parser.add_argument("--interp_num_dims", type=int, default=1)
